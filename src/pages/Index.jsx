@@ -1,10 +1,14 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
-    <div className="text-center">
-      <h1 className="text-3xl">Your Blank Canvas</h1>
-      <p>Chat with the agent to start making edits.</p>
+    <div className="flex flex-col items-center justify-center h-full">
+      <h1 className="text-4xl font-bold mb-6">Welcome to Your Todo App</h1>
+      <p className="text-xl mb-8">Start organizing your tasks efficiently!</p>
+      <Button asChild>
+        <Link to="/todo">Go to Todo List</Link>
+      </Button>
     </div>
   );
 };
