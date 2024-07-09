@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -6,19 +6,26 @@ import { Trash2, Calendar as CalendarIcon } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const TodoList = () => {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [weekDates, setWeekDates] = useState([]);
+
+  useEffect(() => {
+    const start = startOfWeek(selectedDate);
+    const end = endOfWeek(selectedDate);
+    const weekDays = eachDayOfInterval({ start, end });
+    setWeekDates(weekDays);
+  }, [selectedDate]);
 
   const addTodo = () => {
     if (newTodo.trim() !== "") {
       setTodos([...todos, { id: Date.now(), text: newTodo, completed: false, date: selectedDate }]);
       setNewTodo("");
-      setSelectedDate(new Date());
     }
   };
 
@@ -52,8 +59,10 @@ const TodoList = () => {
     setTodos(items);
   };
 
+  const filteredTodos = todos.filter((todo) => isSameDay(todo.date, selectedDate));
+
   return (
-    <div className="max-w-md mx-auto mt-8">
+    <div className="max-w-4xl mx-auto mt-8">
       <h1 className="text-2xl font-bold mb-4">Todo List</h1>
       <div className="flex space-x-2 mb-4">
         <Input
@@ -82,11 +91,28 @@ const TodoList = () => {
         </Popover>
         <Button onClick={addTodo}>Add</Button>
       </div>
+
+      <div className="grid grid-cols-7 gap-2 mb-4">
+        {weekDates.map((date) => (
+          <Button
+            key={date.toString()}
+            variant={isSameDay(date, selectedDate) ? "default" : "outline"}
+            className="w-full"
+            onClick={() => setSelectedDate(date)}
+          >
+            <div className="flex flex-col items-center">
+              <span className="text-xs">{format(date, "EEE")}</span>
+              <span className="text-lg">{format(date, "d")}</span>
+            </div>
+          </Button>
+        ))}
+      </div>
+
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="todos">
           {(provided) => (
             <ul {...provided.droppableProps} ref={provided.innerRef}>
-              {todos.map((todo, index) => (
+              {filteredTodos.map((todo, index) => (
                 <Draggable key={todo.id} draggableId={todo.id.toString()} index={index}>
                   {(provided) => (
                     <li
