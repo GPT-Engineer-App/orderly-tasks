@@ -2,17 +2,23 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2 } from "lucide-react";
+import { Trash2, Calendar as CalendarIcon } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const TodoList = () => {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const addTodo = () => {
     if (newTodo.trim() !== "") {
-      setTodos([...todos, { id: Date.now(), text: newTodo, completed: false }]);
+      setTodos([...todos, { id: Date.now(), text: newTodo, completed: false, date: selectedDate }]);
       setNewTodo("");
+      setSelectedDate(new Date());
     }
   };
 
@@ -26,6 +32,14 @@ const TodoList = () => {
 
   const deleteTodo = (id) => {
     setTodos(todos.filter((todo) => todo.id !== id));
+  };
+
+  const updateTodoDate = (id, newDate) => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, date: newDate } : todo
+      )
+    );
   };
 
   const onDragEnd = (result) => {
@@ -48,7 +62,24 @@ const TodoList = () => {
           onChange={(e) => setNewTodo(e.target.value)}
           placeholder="Add a new todo"
           onKeyPress={(e) => e.key === "Enter" && addTodo()}
+          className="flex-grow"
         />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
         <Button onClick={addTodo}>Add</Button>
       </div>
       <DragDropContext onDragEnd={onDragEnd}>
@@ -68,9 +99,25 @@ const TodoList = () => {
                         checked={todo.completed}
                         onCheckedChange={() => toggleTodo(todo.id)}
                       />
-                      <span className={todo.completed ? "line-through" : ""}>
+                      <span className={cn("flex-grow", todo.completed ? "line-through" : "")}>
                         {todo.text}
                       </span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <CalendarIcon className="h-4 w-4 mr-2" />
+                            {format(todo.date, "MMM d, yyyy")}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={todo.date}
+                            onSelect={(date) => updateTodoDate(todo.id, date)}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <Button
                         variant="ghost"
                         size="icon"
